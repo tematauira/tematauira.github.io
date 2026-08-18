@@ -1,6 +1,6 @@
 const SHELL_CACHE = 'etude-shell-v1';
 const RUNTIME_CACHE = 'etude-runtime-v1';
-const SHELL_ASSETS = ["/tematauira.github.io/", "/tematauira.github.io/index.html", "/tematauira.github.io/styles.css?v=4b67781a", "/tematauira.github.io/script.js?v=8963d4c6", "/tematauira.github.io/manifest.json", "/tematauira.github.io/offline.html", "/tematauira.github.io/icons/icon-192.png", "/tematauira.github.io/icons/icon-512.png", "/tematauira.github.io/icons/apple-touch-icon.png"];
+const SHELL_ASSETS = ["/", "/index.html", "/styles.css?v=4b67781a", "/script.js?v=40fd28f4", "/manifest.json", "/offline.html", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon.png"];
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
@@ -37,7 +37,7 @@ self.addEventListener('fetch', function(event) {
     }).catch(function() {
       return caches.match(request).then(function(cached) {
         if (cached) return cached;
-        if (request.mode === 'navigate') return caches.match('/tematauira.github.io/offline.html');
+        if (request.mode === 'navigate') return caches.match('/offline.html');
         return undefined;
       });
     })
