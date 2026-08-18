@@ -1,0 +1,1002 @@
+
+:root {
+    color-scheme: light dark;
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --border: #e2e5ea;
+    --text: #1c1e21;
+    --text-muted: #5b6270;
+    --text-faint: #8a8f99;
+    --accent: #1b4d89;
+    --accent-hover: #163d6d;
+    --hover-bg: #eef1f5;
+    --intro-bg: #f9f9f9;
+    --reading-font-size: 16px;
+    --guide1-color: #d4a017;
+    --guide2-color: #b22222;
+    --guide3-color: #1e6fd9;
+    --guide5-color: #2f9e44;
+    --guide6-color: #7c3aed;
+    --guide7-color: #f76707;
+    --guide8-color: #0ca678;
+    --cameo-accent: #b8860b;
+}
+
+:root[data-text-size="xsmall"] {
+    --reading-font-size: 12px;
+}
+
+:root[data-text-size="small"] {
+    --reading-font-size: 14px;
+}
+
+:root[data-text-size="large"] {
+    --reading-font-size: 19px;
+}
+
+:root[data-text-size="xlarge"] {
+    --reading-font-size: 22px;
+}
+
+:root[data-text-size="xxlarge"] {
+    --reading-font-size: 25px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #15171c;
+        --surface: #1c1f26;
+        --border: #2c313a;
+        --text: #e8e9ec;
+        --text-muted: #9aa1ac;
+        --text-faint: #7a8190;
+        --accent: #5b9bdb;
+        --accent-hover: #7fb3e8;
+        --hover-bg: #242832;
+        --intro-bg: #20242c;
+        --guide1-color: #ffd43b;
+        --guide2-color: #ff6b6b;
+        --guide3-color: #4dabf7;
+    --guide5-color: #51cf66;
+    --guide6-color: #9775fa;
+    --guide7-color: #ffa94d;
+    --guide8-color: #20c997;
+    --cameo-accent: #f0c454;
+    }
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #15171c;
+    --surface: #1c1f26;
+    --border: #2c313a;
+    --text: #e8e9ec;
+    --text-muted: #9aa1ac;
+    --text-faint: #7a8190;
+    --accent: #5b9bdb;
+    --accent-hover: #7fb3e8;
+    --hover-bg: #242832;
+    --intro-bg: #20242c;
+    --guide1-color: #ffd43b;
+    --guide2-color: #ff6b6b;
+    --guide3-color: #4dabf7;
+    --guide5-color: #51cf66;
+    --guide6-color: #9775fa;
+    --guide7-color: #ffa94d;
+    --guide8-color: #20c997;
+    --cameo-accent: #f0c454;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+h1, h2 {
+    color: var(--text);
+}
+
+.page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+    position: relative;
+}
+
+h1 {
+    margin: 0 0 16px;
+    padding-right: 100px;
+    font-size: 22px;
+}
+
+/* Centre ("Chapitre N" seul, sans nom de livre) - un texte centre n'est pas
+   protege par le padding-right de h1 (fonctionne seulement pour du texte
+   aligne a gauche), donc une vraie marge haute degage la rangee de boutons
+   .page-controls (position absolute, meme sommet du flux que ce titre). */
+.chapter-title {
+    margin: 52px 0 16px;
+    font-size: 22px;
+    text-align: center;
+}
+
+.page-controls {
+    position: absolute;
+    top: 32px;
+    right: 20px;
+    display: flex;
+    gap: 8px;
+}
+
+.theme-toggle,
+.text-size-toggle {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.theme-toggle:hover,
+.text-size-toggle:hover {
+    background: var(--hover-bg);
+}
+
+.text-size-control {
+    position: relative;
+}
+
+.text-size-popover {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 2000;
+}
+
+.text-size-popover[hidden] {
+    display: none;
+}
+
+.text-size-step {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.text-size-step:hover:not(:disabled) {
+    background: var(--hover-bg);
+}
+
+.text-size-step:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.ts-glyph {
+    font-weight: 600;
+    line-height: 1;
+}
+
+.ts-small {
+    font-size: 12px;
+}
+
+.ts-large {
+    font-size: 22px;
+}
+
+.continue-reading {
+    display: block;
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    background: var(--accent);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.continue-reading:hover {
+    background: var(--accent-hover);
+}
+
+.volume {
+    margin-bottom: 14px;
+}
+
+.volume-toggle,
+.accordion-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+}
+
+.volume-toggle {
+    padding: 14px 16px;
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.accordion-button {
+    padding: 12px 16px;
+    font-size: 15px;
+}
+
+.volume-toggle:hover,
+.accordion-button:hover {
+    background: var(--hover-bg);
+}
+
+.chevron {
+    flex-shrink: 0;
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted);
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease;
+}
+
+.volume-toggle[aria-expanded="true"] .chevron,
+.accordion-button[aria-expanded="true"] .chevron {
+    transform: rotate(45deg);
+}
+
+.volume-content {
+    display: none;
+    margin-top: 10px;
+}
+
+.volume-content.show {
+    display: block;
+}
+
+.accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.accordion-content {
+    display: none;
+    margin-top: -4px;
+    padding: 14px 16px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+}
+
+.accordion-content.show {
+    display: block;
+}
+
+.chapter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    gap: 8px;
+}
+
+.chapter-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    border-radius: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.chapter-link:hover,
+.chapter-link:focus-visible {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+}
+
+/* Cameos : section autonome, identite visuelle propre (pas les couleurs de
+   signet des guides, qui n'ont pas de sens ici puisque rien n'est relie a
+   un verset). Cartes/tuiles plutot que la lecture continue des guides. */
+.cameo-home-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 24px;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 16px;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.cameo-home-button:hover,
+.cameo-home-button:focus-visible {
+    border-color: var(--cameo-accent);
+    background: var(--hover-bg);
+}
+
+.cameo-home-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.cameo-back {
+    margin-bottom: 1em;
+}
+
+.cameo-back a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.cameo-back a:hover {
+    color: var(--accent);
+}
+
+.cameo-intro {
+    color: var(--text-muted);
+    margin-bottom: 1.6em;
+    max-width: 60ch;
+}
+
+.cameo-category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    max-width: 100%;
+}
+
+.cameo-category-tile {
+    display: block;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s, transform 0.1s;
+}
+
+.cameo-category-tile:hover,
+.cameo-category-tile:focus-visible {
+    border-color: var(--cameo-accent);
+}
+
+.cameo-category-tile h3 {
+    margin: 0 0 6px;
+    color: var(--cameo-accent);
+    font-size: 18px;
+}
+
+.cameo-category-tile p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.cameo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    max-width: 100%;
+}
+
+.cameo-tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 14px 10px;
+    min-height: 56px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.cameo-tile:hover,
+.cameo-tile:focus-visible {
+    border-color: var(--cameo-accent);
+    color: var(--cameo-accent);
+}
+
+.cameo-content {
+    max-width: 68ch;
+}
+
+.cameo-content .cameo-subheading {
+    margin: 1.8em 0 0.6em;
+    padding-top: 1.2em;
+    border-top: 1px solid var(--border);
+    font-size: 19px;
+    color: var(--text);
+}
+
+.cameo-content .cameo-subheading:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.cameo-meta {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.8em;
+}
+
+.cameo-description p,
+.cameo-analysis p {
+    margin: 0.7em 0;
+    line-height: 1.65;
+    font-size: var(--reading-font-size);
+}
+
+.cameo-fact {
+    margin: 1em 0;
+    padding: 12px 14px;
+    background: var(--intro-bg);
+    border-left: 3px solid var(--cameo-accent);
+    border-radius: 0 8px 8px 0;
+    font-size: var(--reading-font-size);
+    line-height: 1.5;
+}
+
+.verse-container {
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.verse-container.introduction {
+    background-color: var(--intro-bg);
+    font-style: italic;
+}
+
+.tahitien, .francais {
+    width: 48%;
+    font-size: var(--reading-font-size);
+}
+
+.verse-fr {
+    margin: 0 0 16px;
+    line-height: 1.65;
+    font-size: var(--reading-font-size);
+}
+
+.verse-fr.introduction {
+    background-color: var(--intro-bg);
+    font-style: italic;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.verse-fr sup {
+    color: var(--text-faint);
+    font-weight: 600;
+    font-size: 0.65em;
+    margin-right: 2px;
+}
+
+.tah-word,
+.en-word {
+    cursor: pointer;
+    border-bottom: 1px dotted var(--accent);
+}
+
+.tah-word:hover,
+.tah-word.active,
+.en-word:hover,
+.en-word.active {
+    background: var(--hover-bg);
+}
+
+.tah-popup {
+    position: fixed;
+    max-width: 280px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--text);
+    z-index: 3000;
+}
+
+.bookmark {
+    text-decoration: none;
+    opacity: 0.55;
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.bookmark:hover,
+.bookmark:focus-visible {
+    opacity: 1;
+}
+
+/* Chaque type de signet a sa propre couleur - un futur volume n'a qu'a
+   ajouter une regle .bookmark-<cle> ici + une ligne dans BOOKMARK_FILTER_ROWS
+   (cote Python), le reste (popover, persistance, isolation) est deja
+   generique. */
+.bookmark-guide { color: var(--guide1-color); }
+.bookmark-guide2 { color: var(--guide2-color); }
+.bookmark-guide3 { color: var(--guide3-color); }
+.bookmark-guide5 { color: var(--guide5-color); }
+.bookmark-guide6 { color: var(--guide6-color); }
+.bookmark-guide7 { color: var(--guide7-color); }
+.bookmark-guide8 { color: var(--guide8-color); }
+
+html[data-hide-bookmark-guide] .bookmark-guide { display: none; }
+html[data-hide-bookmark-guide2] .bookmark-guide2 { display: none; }
+html[data-hide-bookmark-guide3] .bookmark-guide3 { display: none; }
+html[data-hide-bookmark-guide5] .bookmark-guide5 { display: none; }
+html[data-hide-bookmark-guide6] .bookmark-guide6 { display: none; }
+html[data-hide-bookmark-guide7] .bookmark-guide7 { display: none; }
+html[data-hide-bookmark-guide8] .bookmark-guide8 { display: none; }
+
+/* Volume 7 (Verse by Verse) : survol de chapitre/plage sans verset precis
+   (pas de signet dessus) et libelle "Note"/"Notes" fusionne dans l'entree -
+   juste une distinction visuelle legere, le reste vient du style generique
+   .guide-content p. */
+.vv-overview {
+    margin-bottom: 1em;
+    padding-bottom: 1em;
+    border-bottom: 1px solid var(--border);
+}
+.vv-overview-label {
+    font-style: italic;
+    opacity: 0.75;
+}
+.vv-note-label {
+    font-weight: 600;
+    opacity: 0.7;
+    margin-top: 0.75em;
+}
+
+/* Un seul bouton d'entete pour tous les signets, avec un popover listant un
+   toggle par type - ne grossit jamais dans l'entete quel que soit le nombre
+   de types de signets ajoutes au fil du temps. */
+.bookmark-filter-toggle {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.bookmark-filter-toggle:hover {
+    background: var(--hover-bg);
+}
+
+
+.bookmark-filter-popover {
+    /* Ancre sur .page-controls (deja position:absolute, donc bloc
+       englobant valide) plutot que sur .bookmark-filter-control lui-meme -
+       ce bouton n'est pas le plus a droite de la rangee (theme-toggle le
+       suit), un ancrage sur lui-meme faisait deborder le popover a gauche
+       de l'ecran sur mobile etroit. */
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    display: flex;
+    flex-direction: column;
+    width: min(190px, calc(100vw - 32px));
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 2000;
+}
+
+.bookmark-filter-popover[hidden] {
+    display: none;
+}
+
+.bookmark-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 8px;
+    background: none;
+    border: none;
+    border-radius: 7px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.bookmark-filter-row:hover {
+    background: var(--hover-bg);
+}
+
+.bookmark-filter-icon {
+    display: flex;
+    flex-shrink: 0;
+}
+
+.bookmark-filter-icon svg {
+    width: 13px;
+    height: 13px;
+}
+
+.bookmark-filter-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bookmark-filter-switch {
+    position: relative;
+    width: 26px;
+    height: 15px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--border);
+    transition: background 0.15s ease;
+}
+
+.bookmark-filter-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.15s ease;
+}
+
+.bookmark-filter-row[aria-checked="false"] .bookmark-filter-switch {
+    background: var(--border);
+}
+
+.bookmark-filter-row[aria-checked="true"] .bookmark-filter-switch {
+    background: #22c55e;
+}
+
+.bookmark-filter-row[aria-checked="true"] .bookmark-filter-switch::after {
+    transform: translateX(11px);
+}
+
+.guide-content {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Question du guide Start to Finish - meme rouge que les citations
+   surlignees du guide Gospel Doctrine (voir .bookmark-guide2). */
+.commentary-head {
+    color: var(--guide2-color);
+    font-weight: bold;
+}
+
+.guide-content h4.student-manual-head {
+    color: var(--guide5-color);
+    font-weight: bold;
+    margin-bottom: 0.4em;
+}
+
+.guide-content h4.evidence-head {
+    color: var(--guide7-color);
+    font-weight: bold;
+    margin-bottom: 0.4em;
+}
+
+.guide-content p.evidence-abstract {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.guide-content figure {
+    margin: 1em 0;
+}
+
+.guide-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.guide-content figcaption {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 0.4em;
+}
+
+.guide-content ul.footnotes {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 1.5em;
+    padding-top: 1em;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.guide-content ul.footnotes li {
+    margin-bottom: 0.6em;
+}
+
+.conf-session {
+    margin: 0 0 4px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.conf-speaker {
+    margin: 0 0 16px;
+    font-size: 15px;
+    color: var(--text-muted);
+}
+
+.guide-content.isolated .guide-entry {
+    display: none;
+}
+
+.guide-content.isolated .guide-entry.target {
+    display: block;
+}
+
+.entry-card-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 16px 0 24px;
+}
+
+.entry-card-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.entry-card-counter {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.entry-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.entry-card-nav button,
+.entry-card-actions button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--accent);
+    font: inherit;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.entry-card-nav button:hover,
+.entry-card-actions button:hover {
+    background: var(--hover-bg);
+}
+
+.entry-card-actions button.copied {
+    color: #4ade80;
+    border-color: #4ade80;
+}
+
+.entry-card-actions button.refs-toggle-btn {
+    position: relative;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+}
+
+.entry-card-actions button.refs-toggle-btn.active {
+    color: var(--text-faint);
+}
+
+.entry-card-actions button.refs-toggle-btn.active::after {
+    content: '';
+    position: absolute;
+    left: 18%;
+    right: 18%;
+    top: 50%;
+    height: 2px;
+    background: currentColor;
+    transform: rotate(-12deg);
+}
+
+.entry-card-nav button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    background: #1c1e21;
+    color: #ffffff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.toast.show {
+    opacity: 1;
+}
+
+.guide-content h4,
+.guide-content h3.conf-subhead {
+    margin: 1.4em 0 0.4em;
+    font-size: 15px;
+    color: var(--accent);
+}
+
+/* Gospel Doctrine (data-volume-key="guide") : ses <h4> viennent tels quels
+   de la source (titres de citation) et suivaient jusqu'ici le bleu generique
+   .guide-content h4 au lieu de la couleur de son propre signet - l'attribut
+   ajoute juste assez de specificite pour gagner sur la regle generique
+   ci-dessus sans toucher aux autres guides (guide2 a deja sa
+   propre classe plus specifique, guide3 n'utilise pas de <h4>). */
+.guide-content[data-volume-key="guide"] h4 {
+    color: var(--guide1-color);
+}
+
+/* La source Gospel Doctrine surligne des extraits de versets en rouge
+   (<font color="#b22222">, code d'origine) - recolore en or pour rester
+   fidele a la couleur du signet de CE guide plutot que le rouge de
+   Start to Finish, qui n'avait ete choisi que par coincidence avec ce
+   rouge deja present dans cette source (voir .commentary-head). */
+.guide-content[data-volume-key="guide"] font[color] {
+    color: var(--guide1-color) !important;
+}
+
+.guide-content p {
+    margin: 0.7em 0;
+    line-height: 1.6;
+    font-size: var(--reading-font-size);
+}
+
+.guide-content p.Indent1,
+.guide-content [style*="margin-left"],
+.guide-content blockquote {
+    margin-left: 0 !important;
+    padding-left: 1em;
+    border-left: 3px solid var(--border);
+}
+
+.guide-content ol, .guide-content ul {
+    padding-left: 1.4em;
+}
+
+.guide-content a {
+    color: var(--accent);
+    overflow-wrap: break-word;
+}
+
+.guide-content table {
+    width: 100%;
+    border-collapse: collapse;
+    display: block;
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+.guide-content th, .guide-content td {
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    text-align: left;
+}
+
+@media (max-width: 640px) {
+    .page {
+        padding: 20px 10px 60px;
+    }
+
+    .page-controls {
+        top: 20px;
+        right: 10px;
+    }
+
+    .volume-toggle {
+        font-size: 17px;
+        padding: 12px 14px;
+    }
+
+    .chapter-grid {
+        grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    }
+
+    .verse-container {
+        gap: 8px;
+        font-size: 14px;
+    }
+}

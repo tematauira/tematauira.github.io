@@ -1,0 +1,17 @@
+{
+  "id": "/tematauira.github.io/",
+  "name": "Etude",
+  "short_name": "Etude",
+  "description": "Livre de Mormon en francais et tahitien, avec guides d'etude",
+  "start_url": "/tematauira.github.io/index.html",
+  "scope": "/tematauira.github.io/",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#1b4d89",
+  "lang": "fr",
+  "icons": [
+    { "src": "/tematauira.github.io/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/tematauira.github.io/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/tematauira.github.io/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
