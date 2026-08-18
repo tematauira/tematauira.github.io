@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'etude-shell-v1';
-const RUNTIME_CACHE = 'etude-runtime-v1';
+const SHELL_CACHE = 'bam-shell-v1';
+const RUNTIME_CACHE = 'bam-runtime-v1';
 const SHELL_ASSETS = ["/", "/index.html", "/styles.css?v=4b67781a", "/script.js?v=40fd28f4", "/manifest.json", "/offline.html", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon.png"];
 
 self.addEventListener('install', function(event) {
