@@ -20,6 +20,18 @@
     --guide7-color: #f76707;
     --guide8-color: #0ca678;
     --cameo-accent: #b8860b;
+    --analogy-accent: #b5541f;
+    /* Couleur de texte lisible sur le fond --guideN-color (bouton
+       "Continuer" par signet) - choisie par contraste WCAG mesure (>= 4.5:1)
+       sur chaque teinte plutot que blanc partout, certaines etant trop
+       claires pour ca (guide1 jaune, guide7 orange...). */
+    --guide1-text: #1c1e21;
+    --guide2-text: #ffffff;
+    --guide3-text: #ffffff;
+    --guide5-text: #1c1e21;
+    --guide6-text: #ffffff;
+    --guide7-text: #1c1e21;
+    --guide8-text: #1c1e21;
 }
 
 :root[data-text-size="xsmall"] {
@@ -62,6 +74,17 @@
     --guide7-color: #ffa94d;
     --guide8-color: #20c997;
     --cameo-accent: #f0c454;
+    --analogy-accent: #e8935c;
+    /* Toutes ces teintes (mode sombre) sont trop claires pour du texte
+       blanc - texte fonce partout ici, contrairement au mode clair ou
+       c'est mixte (voir :root). */
+    --guide1-text: #1c1e21;
+    --guide2-text: #1c1e21;
+    --guide3-text: #1c1e21;
+    --guide5-text: #1c1e21;
+    --guide6-text: #1c1e21;
+    --guide7-text: #1c1e21;
+    --guide8-text: #1c1e21;
     }
 }
 
@@ -89,6 +112,14 @@
     --guide7-color: #ffa94d;
     --guide8-color: #20c997;
     --cameo-accent: #f0c454;
+    --analogy-accent: #e8935c;
+    --guide1-text: #1c1e21;
+    --guide2-text: #1c1e21;
+    --guide3-text: #1c1e21;
+    --guide5-text: #1c1e21;
+    --guide6-text: #1c1e21;
+    --guide7-text: #1c1e21;
+    --guide8-text: #1c1e21;
 }
 
 * {
@@ -127,6 +158,39 @@ h1 {
     margin: 52px 0 16px;
     font-size: 22px;
     text-align: center;
+}
+
+/* Rangee de boutons (Accueil, Retour au verset, Chapitre precedent/suivant,
+   Discours precedent/suivant, Page precedente/suivante) en bas de page -
+   flex-wrap plutot que du texte separe par des "|" : s'enroule proprement
+   sur 2 lignes si les 4 boutons ne tiennent pas sur une largeur mobile,
+   sans jamais rien couper/masquer, avec des zones de clic confortables. */
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+nav a {
+    /* grow (remplit l'espace restant sur sa ligne, ex. seul sur une 2e
+       ligne = prend toute la largeur) + shrink, base 140px avant
+       redistribution - evite les boutons ecrases a l'etroit ou, a
+       l'inverse, un bouton isole laissant un grand vide a cote de lui. */
+    flex: 1 1 140px;
+    padding: 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+nav a:hover {
+    background: var(--hover-bg);
 }
 
 .page-controls {
@@ -219,7 +283,7 @@ h1 {
 
 .continue-reading {
     display: block;
-    margin: 0 0 20px;
+    margin: 0 0 10px;
     padding: 14px 16px;
     background: var(--accent);
     color: #ffffff;
@@ -227,11 +291,24 @@ h1 {
     border-radius: 8px;
     font-size: 15px;
     font-weight: 500;
+    overflow-wrap: break-word;
 }
 
 .continue-reading:hover {
-    background: var(--accent-hover);
+    filter: brightness(0.92);
 }
+
+/* Un Continuer de guide/signet reprend la couleur de son ruban (memes
+   variables --guideN-color/--guideN-text que .bookmark-guideN) plutot que
+   le bleu generique - le survol (filter, regle ci-dessus) s'applique deja a
+   toute couleur sans avoir besoin d'une regle par guide. */
+.continue-reading.continue-guide { background: var(--guide1-color); color: var(--guide1-text); }
+.continue-reading.continue-guide2 { background: var(--guide2-color); color: var(--guide2-text); }
+.continue-reading.continue-guide3 { background: var(--guide3-color); color: var(--guide3-text); }
+.continue-reading.continue-guide5 { background: var(--guide5-color); color: var(--guide5-text); }
+.continue-reading.continue-guide6 { background: var(--guide6-color); color: var(--guide6-text); }
+.continue-reading.continue-guide7 { background: var(--guide7-color); color: var(--guide7-text); }
+.continue-reading.continue-guide8 { background: var(--guide8-color); color: var(--guide8-text); }
 
 .volume {
     margin-bottom: 14px;
@@ -500,6 +577,155 @@ h1 {
     border-radius: 0 8px 8px 0;
     font-size: var(--reading-font-size);
     line-height: 1.5;
+}
+
+/* Conference generale analogie : meme famille visuelle que les cameos (section
+   autonome, pas de signet), identite propre via --analogy-accent. */
+.analogy-home-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 24px;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 16px;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.analogy-home-button:hover,
+.analogy-home-button:focus-visible {
+    border-color: var(--analogy-accent);
+    background: var(--hover-bg);
+}
+
+.analogy-home-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.analogy-back {
+    margin-bottom: 1em;
+}
+
+.analogy-back a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.analogy-back a:hover {
+    color: var(--accent);
+}
+
+.analogy-intro {
+    color: var(--text-muted);
+    margin-bottom: 1.6em;
+    max-width: 60ch;
+}
+
+.analogy-section-title {
+    margin-top: 2em;
+}
+
+.analogy-theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    max-width: 100%;
+}
+
+.analogy-theme-tile {
+    display: block;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s;
+}
+
+.analogy-theme-tile:hover,
+.analogy-theme-tile:focus-visible {
+    border-color: var(--analogy-accent);
+}
+
+.analogy-theme-tile h3 {
+    margin: 0 0 4px;
+    color: var(--analogy-accent);
+    font-size: 16px;
+}
+
+.analogy-theme-tile p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.analogy-list {
+    max-width: 68ch;
+}
+
+.analogy-card {
+    margin: 0 0 1.4em;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--analogy-accent);
+    border-radius: 0 10px 10px 0;
+}
+
+.analogy-theme-tag {
+    display: inline-block;
+    margin-bottom: 0.6em;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--intro-bg);
+    color: var(--analogy-accent);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.analogy-meta {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0 0 0.8em;
+}
+
+.analogy-text,
+.analogy-signif {
+    margin: 0.6em 0;
+    line-height: 1.6;
+    font-size: var(--reading-font-size);
+}
+
+.analogy-link {
+    display: inline-block;
+    margin-top: 0.4em;
+    color: var(--analogy-accent);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.analogy-link:hover {
+    text-decoration: underline;
+}
+
+.analogy-talk-title {
+    margin-top: 0;
+    color: var(--text-muted);
+    font-size: 18px;
+    font-weight: 500;
 }
 
 .verse-container {

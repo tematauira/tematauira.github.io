@@ -22,6 +22,50 @@
     }
 })();
 
+// Reprise automatique a l'ouverture de l'app (PWA start_url = accueil) :
+// redirige immediatement vers le tout dernier endroit visite, tous volumes
+// confondus (Livre de Mormon ou n'importe quel guide/signet) - determine
+// par le champ savedAt le plus recent (voir saveReadingPosition plus bas).
+// Place ICI, avant DOMContentLoaded (le <script> de <head> bloque le
+// parsing du <body>, donc ce code s'execute avant que l'accueil n'ait eu le
+// temps de s'afficher - pas de flash visible).
+//
+// sessionStorage (efface a la fermeture complete de l'app/onglet, contrairement
+// a localStorage) sert de garde-fou : ne redirige qu'UNE SEULE FOIS par
+// ouverture. Naviguer normalement puis revenir a l'accueil (bouton retour,
+// qui redirige deja vers l'accueil - voir CHAPTER_NAV) affiche alors
+// l'accueil normalement, sans rebond, puisque le flag est deja pose.
+(function() {
+    // Tout enveloppe dans un try/catch : une erreur non rattrapee ici (ex.
+    // sessionStorage bloque en navigation privee stricte) stopperait TOUT
+    // le reste de ce script (dont l'enregistrement du DOMContentLoaded plus
+    // bas), puisque ce code tourne en tete de fichier, hors gestionnaire
+    // d'evenement.
+    try {
+    var SITE_BASE_JS = "";
+    var path = location.pathname;
+    var isHome = path === SITE_BASE_JS + '/index.html' || path === SITE_BASE_JS + '/' || path === SITE_BASE_JS;
+    if (!isHome) return;
+    if (sessionStorage.getItem('bukaAMoromona:autoResumed')) return;
+    sessionStorage.setItem('bukaAMoromona:autoResumed', '1');
+    var all = {};
+    try { all = JSON.parse(localStorage.getItem('bukaAMoromona:reading')) || {}; } catch (e) {}
+    var best = null;
+    Object.keys(all).forEach(function(key) {
+        var saved = all[key];
+        if (!saved || !saved.href || !saved.savedAt) return;
+        if (!best || saved.savedAt > best.savedAt) best = saved;
+    });
+    // location.href (pas .replace()) - garde l'accueil comme entree
+    // d'historique EN DESSOUS de la page de destination. Avec .replace(),
+    // il ne restait plus rien "en dessous" une fois sur la page de lecture
+    // : le bouton retour du telephone fermait l'app au lieu de revenir a
+    // l'accueil (signale par l'utilisateur, confirme absent avec .replace()
+    // - .href pousse une vraie entree, .replace() l'ecrase).
+    if (best) location.href = best.href;
+    } catch (e) {}
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
     var bookmarkFilterToggle = document.querySelector('.bookmark-filter-toggle');
     var bookmarkFilterPopover = document.getElementById('bookmark-filter-popover');
@@ -144,6 +188,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // fois, avec Precedent/Suivant pour naviguer entre elles, et
     // Copier/Partager sur l'entree affichee. Un lien "Retour au verset"
     // est ajoute dans la nav du bas pour revenir au verset francais.
+    // Efface directement (synchrone, au clic) la position "Continuer" de CE
+    // guide - utilise par "Retour au verset"/Precedent/Suivant plus bas.
+    // Deliberement PAS un simple flag lu plus tard par le pagehide de fin de
+    // page (moins fiable sur mobile/Safari iOS ou pagehide peut ne pas
+    // s'executer a temps sur une navigation vers une nouvelle URL) -
+    // l'effacement doit etre termine AVANT que la navigation ne commence.
+    // skipGuidePositionSave sert seulement a empecher le pagehide (plus loin
+    // dans ce script) de RE-creer l'entree juste apres qu'on vient de
+    // l'effacer ici.
+    var skipGuidePositionSave = false;
+    function clearContinueForThisGuide() {
+        skipGuidePositionSave = true;
+        var key = guideContent && guideContent.getAttribute('data-volume-key');
+        if (!key) return;
+        var all = {};
+        try { all = JSON.parse(localStorage.getItem('bukaAMoromona:reading')) || {}; } catch (e) {}
+        delete all[key];
+        localStorage.setItem('bukaAMoromona:reading', JSON.stringify(all));
+    }
+    // Marque un lien comme "sortie de guide" - le clic est capture par
+    // delegation depuis <nav> lui-meme (voir plus bas), un element STABLE
+    // jamais recree, plutot qu'un ecouteur attache individuellement a
+    // chaque lien.
+    function markGuideExitLink(link) {
+        link.setAttribute('data-guide-exit', '1');
+    }
     var guideContent = document.querySelector('.guide-content');
     if (guideContent && location.hash) {
         var targetId = location.hash.slice(1);
@@ -437,7 +507,15 @@ document.addEventListener('DOMContentLoaded', function() {
             controls.appendChild(actionsRow);
 
             guideContent.parentNode.insertBefore(controls, guideContent.nextSibling);
-            showEntry(0);
+            // Arrivee via "Continuer" avec une sous-entree precise dans le
+            // hash (ex. #v1-5, 5e entree du verset 1) : afficher directement
+            // celle-ci plutot que de toujours retomber sur la 1ere (bug
+            // corrige - showEntry(0) etait appele sans condition avant).
+            var initialIndex = 0;
+            for (var mi = 0; mi < matches.length; mi++) {
+                if (matches[mi].id === targetId) { initialIndex = mi; break; }
+            }
+            showEntry(initialIndex);
 
             var bookIdx = guideContent.getAttribute('data-book-idx');
             var chapterIdx = guideContent.getAttribute('data-chapter-idx');
@@ -446,18 +524,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 var backLink = document.createElement('a');
                 backLink.href = '../../chapters-fr/chapter_' + bookIdx + '_' + chapterIdx + '.html#' + baseId;
                 backLink.textContent = 'Retour au verset';
-                nav.insertBefore(document.createTextNode(' | '), nav.firstChild);
+                // "Retour au verset"/Precedent/Suivant = l'utilisateur quitte
+                // deliberement cette entree de guide (pas juste ferme
+                // l'onglet ou navigue ailleurs par accident) - le "Continuer"
+                // de ce signet ne doit plus reapparaitre a l'accueil.
+                markGuideExitLink(backLink);
                 nav.insertBefore(backLink, nav.firstChild);
+
+                // "Accueil" (lien statique du template CHAPTER_NAV) = meme
+                // raisonnement : quitte deliberement cette entree de guide.
+                var homeLink = nav.querySelector('.chapter-home-link');
+                if (homeLink) markGuideExitLink(homeLink);
 
                 // Arrive via signet = simple consultation ponctuelle d'un
                 // verset, pas un parcours du guide lui-meme : Precedent/
                 // Suivant doit continuer la LECTURE du Livre de Mormon
                 // francais (chapitre reel +-1), jamais rester dans le guide
-                // en mode "liste complete" du chapitre voisin.
+                // en mode "liste complete" du chapitre voisin. Mute l'element
+                // EXISTANT (plus de replaceChild) - la delegation depuis nav
+                // ne depend plus de l'identite exacte de l'element clique.
                 [].slice.call(nav.querySelectorAll('a')).forEach(function(a) {
                     var m = a.getAttribute('href').match(/^chapter_(\d+)_(\d+)\.html$/);
                     if (!m) return;
                     a.href = '../../chapters-fr/chapter_' + m[1] + '_' + m[2] + '.html';
+                    markGuideExitLink(a);
+                });
+
+                // Delegation : un seul ecouteur sur <nav> (jamais recree),
+                // plutot qu'un ecouteur par lien individuel - cf. le
+                // commentaire de markGuideExitLink plus haut.
+                nav.addEventListener('click', function(event) {
+                    var link = event.target.closest && event.target.closest('a[data-guide-exit]');
+                    if (!link) return;
+                    event.preventDefault();
+                    var href = link.href;
+                    clearContinueForThisGuide();
+                    setTimeout(function() { window.location.href = href; }, 50);
                 });
             }
         }
@@ -537,6 +639,11 @@ document.addEventListener('DOMContentLoaded', function() {
         var volumeTitle = readingTrack.getAttribute('data-volume-title');
         var saveTimer = null;
         function saveReadingPosition() {
+            // L'utilisateur a clique "Retour au verset"/Precedent/Suivant
+            // depuis cette page de guide (deja efface synchroniquement au
+            // clic, cf. clearContinueForThisGuide plus haut) - ne pas
+            // re-creer l'entree ici quand pagehide se declenche en quittant.
+            if (skipGuidePositionSave) return;
             var items = readingTrack.querySelectorAll('[id]');
             var current = null;
             for (var i = 0; i < items.length; i++) {
@@ -545,19 +652,69 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 }
             }
-            // document.title contient deja "NomDuLivre Chapitre N" (voir
-            // chapter_display_title cote Python) - h2 seul seit juste
-            // "Chapitre N" depuis le retrait du h1 nom de livre en tete de
-            // page, insuffisant pour identifier le livre dans "Continuer".
+            // Fraction de defilement a l'interieur de l'element courant (0 =
+            // son sommet vient d'entrer dans l'ecran, proche de 1 = son bas
+            // approche) - permet a "Continuer" de revenir exactement ou la
+            // lecture a ete arretee, pas juste en haut du verset/de
+            // l'entree. Utile surtout sur les longues entrees de guide (BOM
+            // Evidence...), sans effet notable sur les versets (courts).
+            var scrollFrac = 0;
+            if (current) {
+                var rect = current.getBoundingClientRect();
+                var h = current.offsetHeight || 1;
+                scrollFrac = Math.max(0, Math.min(1, -rect.top / h));
+            }
+            // Un guide arrive via signet isole plusieurs entrees d'un meme
+            // verset (v1, v1-2, v1-3...) avec Precedent/Suivant - on retient
+            // aussi laquelle est affichee (index/total) pour l'afficher dans
+            // "Continuer" (ex. "BOM Evidence 5/15").
+            var entryIndex = null;
+            var entryTotal = null;
+            if (current && current.classList && current.classList.contains('guide-entry')) {
+                var baseId = current.id.split('-')[0];
+                var group = [];
+                var allEntries = readingTrack.querySelectorAll('.guide-entry');
+                for (var gi = 0; gi < allEntries.length; gi++) {
+                    var gid = allEntries[gi].id;
+                    if (gid === baseId || gid.indexOf(baseId + '-') === 0) group.push(allEntries[gi]);
+                }
+                if (group.length > 1) {
+                    for (var pi = 0; pi < group.length; pi++) {
+                        if (group[pi] === current) { entryIndex = pi; entryTotal = group.length; break; }
+                    }
+                }
+            }
+            // document.title contient deja "NomDuLivre Chapitre N" (Livre de
+            // Mormon, voir chapter_display_title cote Python) ou "NomDuLivre
+            // N" (pages de guide) - h2 seul serait insuffisant pour
+            // identifier le livre dans "Continuer".
             var h2 = document.querySelector('h2');
             var h1 = document.querySelector('h1');
+            // Sur une page de guide, le <title>/h2 vient de la source brute
+            // du guide (ex. "1 Nephi 1", sans accent) alors que le <h1> est
+            // deja passe par book_display_title (ex. "1 Néphi", accentue,
+            // meme nom que le reste du site) - utiliser h1+data-chapter-idx
+            // pour "Continuer" plutot que de re-parser un titre non fiable.
+            var guideBook = null;
+            var guideChapter = readingTrack.getAttribute('data-chapter-idx');
+            if (guideChapter) guideBook = h1 ? h1.textContent.trim() : null;
             var all = {};
             try { all = JSON.parse(localStorage.getItem(READING_STORAGE_KEY)) || {}; } catch (e) {}
             all[volumeKey] = {
                 volumeTitle: volumeTitle,
                 href: location.pathname + (current ? '#' + current.id : ''),
                 chapterTitle: document.title || (h2 ? h2.textContent.trim() : (h1 ? h1.textContent.trim() : '')),
-                itemId: current ? current.id : null
+                itemId: current ? current.id : null,
+                scrollFrac: scrollFrac,
+                entryIndex: entryIndex,
+                entryTotal: entryTotal,
+                guideBook: guideBook,
+                guideChapter: guideChapter,
+                // Sert a determiner LE dernier endroit visite tous volumes
+                // confondus, pour la reprise automatique a l'ouverture de
+                // l'app (voir continueSlot plus bas) - independant de
+                // l'ordre d'iteration des cles de l'objet.
+                savedAt: Date.now()
             };
             localStorage.setItem(READING_STORAGE_KEY, JSON.stringify(all));
         }
@@ -570,38 +727,115 @@ document.addEventListener('DOMContentLoaded', function() {
         // l'ancre #vN (ex. arrivee via "Continuer la lecture") avant de
         // capturer/ecraser la position - sinon on lit "haut de page" trop tot.
         setTimeout(saveReadingPosition, 150);
+
+        // Retour precis via "Continuer" : une fois l'ancre native (et
+        // l'isolation eventuelle d'une entree de guide, deja executee plus
+        // haut dans ce script) en place, ajuste le defilement fin a la
+        // fraction sauvegardee - pour retomber exactement ou la lecture
+        // avait ete arretee, pas juste en haut du verset/de l'entree. Lu
+        // AVANT le setTimeout ci-dessus pour ne pas etre ecrase par la
+        // re-sauvegarde qu'il declenche des l'arrivee sur la page.
+        if (location.hash) {
+            var hashId = location.hash.slice(1);
+            var savedForFine = null;
+            try {
+                var allFine = JSON.parse(localStorage.getItem(READING_STORAGE_KEY)) || {};
+                savedForFine = allFine[volumeKey];
+            } catch (e) {}
+            if (savedForFine && savedForFine.itemId === hashId && typeof savedForFine.scrollFrac === 'number') {
+                setTimeout(function() {
+                    var el = document.getElementById(hashId);
+                    if (!el) return;
+                    var rect = el.getBoundingClientRect();
+                    var h = el.offsetHeight || 0;
+                    var targetY = window.scrollY + rect.top + savedForFine.scrollFrac * h;
+                    window.scrollTo({ top: Math.max(0, targetY), behavior: 'auto' });
+                }, 300);
+            }
+        }
     }
 
     // Page d'accueil : une ligne "Continuer la lecture" par volume ayant une
     // position enregistree.
     var continueSlot = document.getElementById('continue-reading-slot');
     if (continueSlot) {
-        // Seuls francais/tahitien sont listes sur la page d'accueil - un
-        // Continuer vers un volume retire de l'accordeon (guides, etc.)
-        // n'a pas de sens ici.
+        // Le navigateur (surtout Chrome mobile/Android) peut restaurer cette
+        // page depuis le bfcache (retour arriere) sans jamais re-executer ce
+        // script - les boutons "Continuer" affiches restent alors figes tels
+        // qu'ils etaient AVANT une visite de guide, meme si le localStorage
+        // a ete mis a jour entre-temps (ex. Continuer efface via "Chapitre
+        // precedent/suivant" - cf. clearContinueForThisGuide plus haut).
+        // pageshow avec persisted=true detecte ce cas et force un rechargement
+        // frais plutot que de laisser un contenu perime affiche.
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) location.reload();
+        });
+        // Francais/tahitien (accordeon d'accueil) + les 7 guides/signets
+        // (GUIDE_LABELS, meme cle que le popover de filtre de signets) -
+        // un Continuer par volume/signet ayant une position sauvegardee.
         var HOME_VOLUME_KEYS = ['french', 'tahitian'];
+        var HOME_VOLUME_PREFIX = { french: 'FR', tahitian: 'TAH' };
+        var GUIDE_LABELS = {"guide": "Gospel Doctrine", "guide2": "Start to Finish", "guide3": "Verse by Verse", "guide5": "Manuel de l'élève", "guide6": "ScripturePlus", "guide7": "BOM Evidence", "guide8": "BOM Minute"};
         var savedAll = {};
         try { savedAll = JSON.parse(localStorage.getItem(READING_STORAGE_KEY)) || {}; } catch (e) {}
+
         Object.keys(savedAll).forEach(function(key) {
-            if (HOME_VOLUME_KEYS.indexOf(key) === -1) return;
             var saved = savedAll[key];
             if (!saved || !saved.href) return;
+            var isGuide = Object.prototype.hasOwnProperty.call(GUIDE_LABELS, key);
+            if (HOME_VOLUME_KEYS.indexOf(key) === -1 && !isGuide) return;
+
             var link = document.createElement('a');
             link.className = 'continue-reading';
             link.href = saved.href;
-            var verseMatch = /^v(\d+)$/.exec(saved.itemId || '');
-            if (true && verseMatch) {
-                // chapterTitle = document.title = 'NomDuLivre Chapitre N'
-                var m = /^(.*) Chapitre (\d+)$/.exec(saved.chapterTitle || '');
-                link.textContent = m
-                    ? 'Continuer - ' + m[1] + ' ' + m[2] + ':' + verseMatch[1]
-                    : 'Continuer - ' + saved.chapterTitle;
+
+            if (isGuide) {
+                link.classList.add('continue-' + key);
+                var verseMatch = /^v(\d+)/.exec(saved.itemId || '');
+                // guideBook/guideChapter (h1 + data-chapter-idx, captures a
+                // la sauvegarde) plutot que de re-parser chapterTitle - evite
+                // l'accent manquant du titre brut de page de guide ("1
+                // Nephi" vs le "1 Néphi" du h1, deja passe par
+                // book_display_title comme le reste du site).
+                var ref = (saved.guideBook && saved.guideChapter && verseMatch)
+                    ? (saved.guideBook + ' ' + saved.guideChapter + ':' + verseMatch[1])
+                    : saved.chapterTitle;
+                var prefix = false ? 'FR — ' : '';
+                var entrySuffix = (saved.entryTotal && saved.entryTotal > 1)
+                    ? ' ' + (saved.entryIndex + 1) + '/' + saved.entryTotal
+                    : '';
+                link.textContent = 'Continuer - ' + prefix + ref + ' · ' + GUIDE_LABELS[key] + entrySuffix;
             } else {
-                var suffix = verseMatch ? (', verset ' + verseMatch[1]) : '';
-                link.textContent = 'Continuer — ' + saved.volumeTitle + ' : ' + saved.chapterTitle + suffix;
+                var verseMatch2 = /^v(\d+)$/.exec(saved.itemId || '');
+                if (true && verseMatch2) {
+                    // chapterTitle = document.title = 'NomDuLivre Chapitre N'
+                    var m2 = /^(.*) Chapitre (\d+)$/.exec(saved.chapterTitle || '');
+                    var ref2 = m2 ? (m2[1] + ' ' + m2[2] + ':' + verseMatch2[1]) : saved.chapterTitle;
+                    var prefix2 = false ? (HOME_VOLUME_PREFIX[key] + ' — ') : '';
+                    link.textContent = 'Continuer - ' + prefix2 + ref2;
+                } else {
+                    var suffix2 = verseMatch2 ? (', verset ' + verseMatch2[1]) : '';
+                    link.textContent = 'Continuer — ' + saved.volumeTitle + ' : ' + saved.chapterTitle + suffix2;
+                }
             }
             continueSlot.appendChild(link);
         });
+    }
+
+    // Page "Conference generale analogie" : un seul bouton "Continuer" (pas de
+    // variante FR/TAH ici, un seul volume) vers le dernier discours visite.
+    var continueAnalogySlot = document.getElementById('continue-analogy-slot');
+    if (continueAnalogySlot) {
+        var savedAnalogyAll = {};
+        try { savedAnalogyAll = JSON.parse(localStorage.getItem(READING_STORAGE_KEY)) || {}; } catch (e) {}
+        var savedAnalogy = savedAnalogyAll['conference-analogies'];
+        if (savedAnalogy && savedAnalogy.href) {
+            var analogyLink = document.createElement('a');
+            analogyLink.className = 'continue-reading';
+            analogyLink.href = savedAnalogy.href;
+            analogyLink.textContent = 'Continuer — ' + savedAnalogy.chapterTitle;
+            continueAnalogySlot.appendChild(analogyLink);
+        }
     }
 });
 
