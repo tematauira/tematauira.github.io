@@ -32,6 +32,12 @@
     --guide6-text: #ffffff;
     --guide7-text: #1c1e21;
     --guide8-text: #1c1e21;
+    /* Couleurs des Continuer FR/TAH accordees aux couvertures de l'accueil
+       (bleu marine / vert) plutot que le bleu --accent generique. */
+    --continue-french-color: #16305c;
+    --continue-french-text: #ffffff;
+    --continue-tahitian-color: #1f6f43;
+    --continue-tahitian-text: #ffffff;
 }
 
 :root[data-text-size="xsmall"] {
@@ -56,7 +62,7 @@
 
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-        --bg: #15171c;
+        --bg: #000000;
         --surface: #1c1f26;
         --border: #2c313a;
         --text: #e8e9ec;
@@ -85,6 +91,10 @@
     --guide6-text: #1c1e21;
     --guide7-text: #1c1e21;
     --guide8-text: #1c1e21;
+    --continue-french-color: #2c4a7c;
+    --continue-french-text: #ffffff;
+    --continue-tahitian-color: #3ea86b;
+    --continue-tahitian-text: #1c1e21;
     }
 }
 
@@ -94,7 +104,7 @@
 
 :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #15171c;
+    --bg: #000000;
     --surface: #1c1f26;
     --border: #2c313a;
     --text: #e8e9ec;
@@ -120,6 +130,10 @@
     --guide6-text: #1c1e21;
     --guide7-text: #1c1e21;
     --guide8-text: #1c1e21;
+    --continue-french-color: #2c4a7c;
+    --continue-french-text: #ffffff;
+    --continue-tahitian-color: #3ea86b;
+    --continue-tahitian-text: #1c1e21;
 }
 
 * {
@@ -441,6 +455,10 @@ nav a:hover {
 .continue-reading.continue-guide6 { background: var(--guide6-color); color: var(--guide6-text); }
 .continue-reading.continue-guide7 { background: var(--guide7-color); color: var(--guide7-text); }
 .continue-reading.continue-guide8 { background: var(--guide8-color); color: var(--guide8-text); }
+/* Continuer des volumes francais/tahitien accordes a la couleur de leur
+   couverture sur l'accueil (bleu marine / vert) plutot que --accent generique. */
+.continue-reading.continue-french { background: var(--continue-french-color); color: var(--continue-french-text); }
+.continue-reading.continue-tahitian { background: var(--continue-tahitian-color); color: var(--continue-tahitian-text); }
 
 .volume {
     margin-bottom: 14px;
@@ -476,6 +494,29 @@ nav a:hover {
 .volume-toggle:hover,
 .accordion-button:hover {
     background: var(--hover-bg);
+}
+
+.volume-cover {
+    flex-shrink: 0;
+    width: 52px;
+    height: 74px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.volume-cover-green {
+    filter: grayscale(1) sepia(1) hue-rotate(80deg) saturate(2.6) brightness(0.92);
+}
+
+.volume-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.volume-toggle .chevron:last-child {
+    margin-left: auto;
 }
 
 .chevron {
@@ -898,30 +939,250 @@ nav a:hover {
 }
 
 .tah-word,
-.en-word {
+.en-word,
+.tah-date {
     cursor: pointer;
-    border-bottom: 1px dotted var(--accent);
+    border-bottom: 1px dotted color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .tah-word:hover,
 .tah-word.active,
 .en-word:hover,
-.en-word.active {
+.en-word.active,
+.tah-date:hover,
+.tah-date.active {
     background: var(--hover-bg);
 }
 
 .tah-popup {
+    --tah-accent: #4dabff;
     position: fixed;
-    max-width: 280px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    font-size: 14px;
-    line-height: 1.4;
-    color: var(--text);
+    min-width: 220px;
+    max-width: 320px;
+    background: #0b0b0f;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 18px;
+    padding: 16px 18px 14px;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+    font-size: 15px;
+    line-height: 1.5;
+    color: #f0f0f4;
     z-index: 3000;
+}
+
+.tah-popup-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #0b0b0f;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    transform: rotate(45deg);
+    border-radius: 2px;
+}
+
+.tah-popup-header {
+    position: relative;
+    padding: 0 30px;
+    margin-bottom: 4px;
+}
+
+.tah-popup-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: #ffffff;
+}
+
+.tah-popup-phonetic {
+    text-align: center;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--tah-accent);
+    margin-top: 2px;
+}
+
+.tah-popup-icons {
+    position: absolute;
+    top: 0;
+    right: -6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tah-popup-audio-btn,
+.tah-popup-info-btn {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--tah-accent);
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.tah-popup-audio-btn:active,
+.tah-popup-info-btn:active {
+    opacity: 0.55;
+}
+
+.tah-popup-text {
+    text-align: left;
+    white-space: pre-line;
+}
+
+.tah-popup-cat {
+    color: var(--tah-accent);
+    font-style: italic;
+    font-weight: 600;
+}
+
+.tah-popup-definition {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    margin-top: 10px;
+    padding-top: 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #c7c7d1;
+}
+
+.tah-popup-definition-text {
+    white-space: pre-line;
+}
+
+.tah-popup-definition-text + .tah-popup-definition-text {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tah-popup-definition-source {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    font-style: italic;
+    opacity: 0.55;
+}
+
+.verse-num-tap {
+    cursor: pointer;
+    padding: 4px 6px 4px 2px;
+    margin: -4px -4px -4px -2px;
+}
+
+.translation-pane .verse-num-tap {
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Mode "Traduction" plein ecran (tap sur un numero de verset tahitien) - un
+   seul verset a la fois dans 2 panneaux (tahitien/francais) qui defilent en
+   synchronisation proportionnelle, cf. script.js openTranslation(). Z-index
+   au-dessus du popover "..." (2000) mais SOUS .tah-popup (3000) - la bulle
+   de mot doit rester visible par-dessus cette overlay. */
+.translation-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.translation-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.translation-close {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 6px;
+    flex-shrink: 0;
+}
+
+.translation-titles {
+    min-width: 0;
+}
+
+.translation-title {
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.translation-ref {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.translation-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.translation-lang-label {
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 18px 0;
+    flex-shrink: 0;
+}
+
+.translation-pane {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 10px 18px 48px;
+    font-size: var(--reading-font-size);
+    line-height: 1.65;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent);
+}
+
+.translation-pane .verse-fr {
+    margin: 0;
+}
+
+.translation-footer {
+    display: flex;
+    gap: 10px;
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.translation-nav-btn {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    padding: 12px 14px;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.translation-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
 }
 
 .bookmark {
@@ -929,10 +1190,19 @@ nav a:hover {
     opacity: 0.55;
     display: inline-flex;
     vertical-align: middle;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
 }
 
 .bookmark:hover,
 .bookmark:focus-visible {
+    opacity: 1;
+}
+
+/* Epingle par appui prolonge 2s (setupBookmarkLongPress) - reste en pleine
+   couleur independamment du survol/focus, jusqu'a desactivation par le
+   meme geste. Etat par INSTANCE (verset+type), pas par type entier. */
+.bookmark.bookmark-pinned {
     opacity: 1;
 }
 
