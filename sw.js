@@ -1,6 +1,6 @@
 const SHELL_CACHE = 'etude-shell-v1';
 const RUNTIME_CACHE = 'etude-runtime-v1';
-const SHELL_ASSETS = ["/", "/index.html", "/styles.css?v=0b9d131f", "/script.js?v=36cf18b7", "/manifest.json", "/offline.html", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon.png"];
+const SHELL_ASSETS = ["/", "/index.html", "/styles.css?v=af07c14e", "/script.js?v=36cf18b7", "/manifest.json", "/offline.html", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon.png"];
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
